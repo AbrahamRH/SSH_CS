@@ -16,6 +16,11 @@
 
  int main(int argc, char *argv[])
  {
+
+  if(argc <= 2){
+    printf("Es necesario especificar el host y el puerto");
+    exit(-1);
+  }
   // Estos 2 son para el comando
   char comando[MAXDATASIZE];
   int len_comando;
@@ -52,32 +57,27 @@
    perror("connect");
    exit(1);
   }
-  
-  fgets(comando,MAXDATASIZE-1,stdin);
 
-  len_comando = strlen(comando) - 1;
-  comando[len_comando] = '\0';
+  while( strcmp(comando, "exit\n") != 0 ){
+    fgets(comando,MAXDATASIZE-1,stdin);
+    len_comando = strlen(comando) - 1;
+    comando[len_comando] = '\0';
+    printf("[Client]: Comando: %s\n",comando);
+    /* Se envia el comando al server */
+    if(send(sockfd,comando, len_comando, 0) == -1) {
+      perror("send()");
+      exit(1);
+    } else 
+      printf("[Client]: Comando enviado...\n");
 
-  printf("Comando: %s\n",comando);
+    if ((numbytes=recv(sockfd, buf, MAXDATASIZE_RESP-1, 0)) == -1) {
+      perror("recv");
+      exit(1);
+    }
 
-  /* Se envia el comando al server */
-  if(send(sockfd,comando, len_comando, 0) == -1) {
-   perror("send()");
-   exit(1);
-  } else 
-   printf("Comando enviado...\n");
-
-  // Si el send no devuelve error continua y lo que falta por hacer
-  // es leer la respuesta
-  if ((numbytes=recv(sockfd, buf, MAXDATASIZE_RESP-1, 0)) == -1) {
-   perror("recv");
-   exit(1);
+    buf[numbytes] = '\0';
+    printf("Recibido:\n%s\n",buf);
   }
-  buf[numbytes] = '\0';
-  printf("Recibido:\n%s\n",buf);
-
-  // Si el recv no devuelve error continua y lo que falta por hacer
-  // es cerrar el file descriptor del cliente
   close(sockfd);
 
   return 0;
