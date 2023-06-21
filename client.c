@@ -58,7 +58,7 @@
    exit(1);
   }
 
-  while( strcmp(comando, "exit\n") != 0 ){
+  // while( strcmp(comando, "salir\n") != 0 ){
     printf("[%s@%s]: ",argv[2], argv[1]);
     fgets(comando,MAXDATASIZE-1,stdin);
     len_comando = strlen(comando) - 1;
@@ -68,15 +68,14 @@
       perror("send()");
       exit(1);
     }
-    printf("Recibiendo\n");
     if ((numbytes=recv(sockfd, buf, MAXDATASIZE_RESP-1, 0)) == -1) {
       perror("recv");
       exit(1);
     }
-
     buf[numbytes] = '\0';
     printf("%s\n",buf);
-  }
+  // }
+  sleep(1);
   close(sockfd);
 
   return 0;
