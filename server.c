@@ -10,6 +10,7 @@
  #include <sys/wait.h>
  #include <signal.h>
  #define LENGTH 20000
+ #define MSG_SIZE 255
 
  int main(int argc, char *argv[])
  {
@@ -65,6 +66,12 @@
 
   while (1)
   {
+    int fd[2];
+    if(pipe(fd) == -1){
+      perror("pipe");
+      exit(1);
+    }
+
     if ((cliente_fd = accept(server_fd, (struct sockaddr *)&cliente, &sin_size_cliente)) == -1) {
       perror("accept");
       exit(1);
@@ -75,41 +82,38 @@
       close(server_fd);
       do {
         numbytes = recv(cliente_fd, buf, 100-1, 0);
-        buf[numbytes] = ' ';
-        buf[numbytes+1] = '>';
-        buf[numbytes+2] = ' ';
-        buf[numbytes+3] = 'a';
-        buf[numbytes+4] = '.';
-        buf[numbytes+5] = 't';
-        buf[numbytes+6] = 'x';
-        buf[numbytes+7] = 't';
-        buf[numbytes+8] = '\0';
+        buf[numbytes] = '\0';
         printf("[Server]: Received: %s\n",buf);
-        system(buf);
-        char* fs_name="a.txt";
-        char sdbuf[LENGTH];
-        printf("[Server]: Enviando salida al Cliente...\n");
-        FILE *fs = fopen(fs_name, "r");
-        if(fs == NULL)
-        {
-          printf("ERROR: File %s not found on server.\n", fs_name);
-          exit(1);
+        FILE *FileOpen;
+        char commandOutput[MSG_SIZE];
+        int lines = 0;
+
+        printf("[Server]: Executing command: %s\n",buf);
+        int stdout = dup(STDOUT_FILENO);
+
+        if( dup2(fd[1],STDOUT_FILENO) == -1 ){
+          perror("dup2");
+          exit(EXIT_FAILURE);
         }
 
-        bzero(sdbuf, LENGTH); 
-        int fs_block_sz; 
-        while((fs_block_sz = fread(sdbuf, sizeof(char), LENGTH, fs))>0)
+        FileOpen = popen(buf,"r");
+        while(fgets(commandOutput, sizeof(commandOutput), FileOpen)){
+          lines++;
+          printf("%s\n", commandOutput);
+        }
+        pclose(FileOpen);
+
+        for(int i = 0; i < lines ; i++)
         {
-          if(send(cliente_fd, sdbuf, fs_block_sz, 0) < 0)
-          {
-            printf("ERROR: al enviar la salida del comando al cliente\n");
+          char msg[MSG_SIZE];
+          read(fd[0],msg,MSG_SIZE);
+          if(send(cliente_fd, msg, sizeof(msg), 0) < 0){
+            perror("ERROR: al enviar la salida del comando al cliente\n");
             exit(1);
           }
-          bzero(sdbuf, LENGTH);
         }
-        fclose( fs );
-        printf("[Server]: Ok sent to client!\n");
       } while(strcmp(buf,"exit\n") != 0);
+
       close(cliente_fd);
       exit(0);
     } else {

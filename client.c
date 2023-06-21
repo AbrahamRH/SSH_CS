@@ -59,16 +59,15 @@
   }
 
   while( strcmp(comando, "exit\n") != 0 ){
+    printf("[%s@%s]: ",argv[2], argv[1]);
     fgets(comando,MAXDATASIZE-1,stdin);
     len_comando = strlen(comando) - 1;
     comando[len_comando] = '\0';
-    printf("[Client]: Comando: %s\n",comando);
     /* Se envia el comando al server */
     if(send(sockfd,comando, len_comando, 0) == -1) {
       perror("send()");
       exit(1);
     } else 
-      printf("[Client]: Comando enviado...\n");
 
     if ((numbytes=recv(sockfd, buf, MAXDATASIZE_RESP-1, 0)) == -1) {
       perror("recv");
@@ -76,7 +75,7 @@
     }
 
     buf[numbytes] = '\0';
-    printf("Recibido:\n%s\n",buf);
+    printf("\n%s\n",buf);
   }
   close(sockfd);
 
