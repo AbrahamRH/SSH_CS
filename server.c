@@ -66,51 +66,45 @@
 
   sin_size_cliente = sizeof( cliente );
 
-    cliente_fd = accept(server_fd, (struct sockaddr *)&cliente, &sin_size_cliente);
-    printf("[Server]: conexion cliente desde %s\n", inet_ntoa(cliente.sin_addr));
+  cliente_fd = accept(server_fd, (struct sockaddr *)&cliente, &sin_size_cliente);
+  printf("[Server]: conexion cliente desde %s\n", inet_ntoa(cliente.sin_addr));
 
-    FILE* popenFile;
-    char output[LENGTH];
-    char response[LENGTH];
+  FILE* popenFile;
+  char output[LENGTH];
+  char response[LENGTH];
 
-    int fd[2];
-    pipe(fd);
+  int fd[2];
+  pipe(fd);
 
-    pid_t child = fork();
-    if( child == 0 ){
+  pid_t child = fork();
+  if( child == 0 ){
 
-      close(fd[READ_END]);
+    close(fd[READ_END]);
+    numbytes = recv(cliente_fd, buf, 100-1, 0);
+    buf[numbytes] = '\0';
+    dup2(fd[WRITE_END],STDOUT_FILENO);
+    close(fd[WRITE_END]);
 
-      numbytes = recv(cliente_fd, buf, 100-1, 0);
-      buf[numbytes] = '\0';
-
-      dup2(fd[WRITE_END],STDOUT_FILENO);
-      close(fd[WRITE_END]);
-
-      popenFile = popen(buf,"r");
-      while(fgets(output,LENGTH,popenFile)){
-        printf("%s",output);
-      }
-      pclose(popenFile);
-
-      while(read(fd[0],response, LENGTH) > 0){
-        send(cliente_fd, response, LENGTH, 0);
-      }
-    } else {
-      close(fd[WRITE_END]);
-      dup2(fd[READ_END],STDIN_FILENO);
-      close(fd[READ_END]);
-      while (read(STDIN_FILENO, response, LENGTH) > 0 )
-      {
-        if(send(cliente_fd,response,LENGTH,0) == -1) {
-          perror("send");
-          exit(EXIT_FAILURE);
-        }
+    popenFile = popen(buf,"r");
+    while(fgets(output,LENGTH,popenFile)){
+      printf("%s",output);
+    }
+    pclose(popenFile);
+  } else {
+    close(fd[WRITE_END]);
+    dup2(fd[READ_END],STDIN_FILENO);
+    close(fd[READ_END]);
+    while (read(STDIN_FILENO, response, LENGTH) > 0 )
+    {
+      if(send(cliente_fd,response,LENGTH,0) == -1) {
+        perror("send");
+        exit(EXIT_FAILURE);
       }
     }
+  }
 
-    printf("[Server]: Cerrando conexion con el cliente.\n");
-    close(cliente_fd);
+  printf("[Server]: Cerrando conexion con el cliente.\n");
+  close(cliente_fd);
   close(server_fd);
   shutdown(server_fd, SHUT_RDWR);
   exit(0);
