@@ -89,7 +89,6 @@
         int lines = 0;
 
         printf("[Server]: Executing command: %s\n",buf);
-        int stdout = dup(STDOUT_FILENO);
 
         if( dup2(fd[1],STDOUT_FILENO) == -1 ){
           perror("dup2");
@@ -114,6 +113,8 @@
         }
       } while(strcmp(buf,"exit\n") != 0);
 
+      close(fd[1]);
+      close(fd[0]);
       close(cliente_fd);
       exit(0);
     } else {

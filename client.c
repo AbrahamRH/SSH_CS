@@ -67,15 +67,15 @@
     if(send(sockfd,comando, len_comando, 0) == -1) {
       perror("send()");
       exit(1);
-    } else 
-
+    }
+    printf("Recibiendo\n");
     if ((numbytes=recv(sockfd, buf, MAXDATASIZE_RESP-1, 0)) == -1) {
       perror("recv");
       exit(1);
     }
 
     buf[numbytes] = '\0';
-    printf("\n%s\n",buf);
+    printf("%s\n",buf);
   }
   close(sockfd);
 
