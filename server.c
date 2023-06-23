@@ -66,44 +66,51 @@
 
   sin_size_cliente = sizeof( cliente );
 
-  cliente_fd = accept(server_fd, (struct sockaddr *)&cliente, &sin_size_cliente);
-  printf("[Server]: conexion cliente desde %s\n", inet_ntoa(cliente.sin_addr));
 
-  FILE* popenFile;
+ FILE* popenFile;
   char output[LENGTH];
   char response[LENGTH];
-
+  
   int fd[2];
   pipe(fd);
+  
+  while((cliente_fd = accept(server_fd, (struct sockaddr *)&cliente, &sin_size_cliente)) > 0){  
+  	printf("[Server]: conexion cliente desde %s\n", inet_ntoa(cliente.sin_addr));
 
-  pid_t child = fork();
-  if( child == 0 ){
+	  // child == 0 es la logica del hijo
+	  if(fork() == 0){
+	  	
+	    close(fd[READ_END]);
+	    numbytes = recv(cliente_fd, buf, 100-1, 0);
+	    if(numbytes == 0) break;
 
-    close(fd[READ_END]);
-    numbytes = recv(cliente_fd, buf, 100-1, 0);
-    buf[numbytes] = '\0';
-    dup2(fd[WRITE_END],STDOUT_FILENO);
-    close(fd[WRITE_END]);
+	    buf[numbytes] = '\0';
+	    dup2(fd[WRITE_END],STDOUT_FILENO);
+	    close(fd[WRITE_END]);
 
-    popenFile = popen(buf,"r");
-    while(fgets(output,LENGTH,popenFile)){
-      printf("%s",output);
-    }
-    pclose(popenFile);
-  } else {
-    close(fd[WRITE_END]);
-    dup2(fd[READ_END],STDIN_FILENO);
-    close(fd[READ_END]);
-    while (read(STDIN_FILENO, response, LENGTH) > 0 )
-    {
-      if(send(cliente_fd,response,LENGTH,0) == -1) {
-        perror("send");
-        exit(EXIT_FAILURE);
-      }
-    }
+	    popenFile = popen(buf,"r");
+	    while(fgets(output,LENGTH,popenFile)){
+	      printf("%s",output);
+	    }
+	    pclose(popenFile);
+
+	  } else {
+	    close(fd[WRITE_END]);
+	    dup2(fd[READ_END],STDIN_FILENO);
+	    close(fd[READ_END]);
+	    while (read(STDIN_FILENO, response, LENGTH) > 0 )	
+	    {
+	      if(send(cliente_fd,response,LENGTH,0) == -1) {
+			perror("send");
+			exit(EXIT_FAILURE);
+	      }
+	    }
+	  }
+
+	  
+	  
   }
-
-  printf("[Server]: Cerrando conexion con el cliente.\n");
+  printf("[Server]: Cerrando conexion con el cliente.\n");	
   close(cliente_fd);
   close(server_fd);
   shutdown(server_fd, SHUT_RDWR);
