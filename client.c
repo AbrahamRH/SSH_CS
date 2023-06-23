@@ -1,4 +1,4 @@
- /*
+  /*
  ** client.c -- Ejemplo de cliente de sockets de flujo
  */
 
@@ -39,8 +39,8 @@
   }
 
   if ((he=gethostbyname(argv[1])) == NULL) {  // obtener información de host servidor 
-   perror("gethostbyname");
-   exit(1);
+  	perror("gethostbyname");
+   	exit(1);
   }
 
   if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
@@ -58,22 +58,30 @@
    exit(1);
   }
 
-  printf("[%s@%s]: ",argv[2], argv[1]);
-  fgets(comando,MAXDATASIZE-1,stdin);
-  len_comando = strlen(comando) - 1;
-  comando[len_comando] = '\0';
-  /* Se envia el comando al server */
-  if(send(sockfd,comando, len_comando, 0) == -1) {
-    perror("send()");
-    exit(1);
+  while(1){
+  	  
+  	  printf("[%s@%s]: ",argv[1], argv[2]);
+	  fgets(comando,MAXDATASIZE-1,stdin);
+	  len_comando = strlen(comando) - 1;
+	  comando[len_comando] = '\0';
+	  /* Se envia el comando al server */
+
+	  if(send(sockfd,comando, len_comando, 0) == -1) {
+	    perror("send()");
+	    exit(1);
+	  }
+
+	  if ((numbytes=recv(sockfd, buf, MAXDATASIZE_RESP-1, 0)) == -1) {
+	    perror("recv");
+	    exit(1);
+	  }
+
+	  buf[numbytes] = '\0';
+	  printf("%s\n",buf);
+	  sleep(1);
+  
   }
-  if ((numbytes=recv(sockfd, buf, MAXDATASIZE_RESP-1, 0)) == -1) {
-    perror("recv");
-    exit(1);
-  }
-  buf[numbytes] = '\0';
-  printf("%s\n",buf);
-  sleep(1);
+  
   close(sockfd);
 
   return 0;
