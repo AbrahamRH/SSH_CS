@@ -83,11 +83,20 @@ int main(int argc, char *argv[])
       while ((numbytes = recv(cliente_fd, buf, sizeof(buf) - 1, 0)) > 0)
       {
         buf[numbytes] = '\0';
-        FILE *popenFile = popen(buf, "r");
-        if (popenFile == NULL)
-        {
-          perror("popen");
-          exit(EXIT_FAILURE);
+        FILE *popenFile = NULL;
+        if(strcmp(buf,"salir") != 0){
+          popenFile = popen(buf, "r");
+          if (popenFile == NULL)
+          {
+            perror("popen");
+            exit(EXIT_FAILURE);
+          }
+        }else{
+          char* response = "Cerrando conexion";
+          send(cliente_fd, response, strlen(response), 0);
+          close(server_fd);
+          close(cliente_fd);
+          exit(0);
         }
         while (fgets(output, LENGTH, popenFile))
         {

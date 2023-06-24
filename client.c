@@ -53,7 +53,7 @@ int main(int argc, char *argv[])
   char comando[MAXDATASIZE];
   int len_comando;
 
-  while (1)
+  while (strcmp(comando,"salir") != 0)
   {
     printf("[%s@%s]: ", argv[1], argv[2]);
     fgets(comando, MAXDATASIZE, stdin);
